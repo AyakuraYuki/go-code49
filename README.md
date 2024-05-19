@@ -2,6 +2,8 @@
 
 Code49 barcode encode/decode implementation.
 
+> Reference: [Barcode-Symbology-Specification-Code-49](https://www.expresscorp.com/wp-content/uploads/2023/02/USS-49.pdf)
+
 ## Completed
 
 * `Decode(bsLines []string, skipChecksum bool) string`
