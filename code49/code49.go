@@ -5,7 +5,8 @@ import (
 	"strings"
 )
 
-// Decode decodes a bunch of numbers `bsLines` which transferred from bar/space data, returns raw text.
+// Decode decodes a bunch of numbers `bsLines` which transferred from bar/space data, returns basic text.
+// The basic text means that text decoded by this method contains checksum mixin characters.
 // It treads the Code49 as Mode-0, ignores other non-data characters.
 // If `skipChecksum` presents to true, Decode will ignore the last line of `bsLines`.
 func Decode(bsLines []string, skipChecksum bool) string {
@@ -63,6 +64,9 @@ func Decode(bsLines []string, skipChecksum bool) string {
 	return buffer.String()
 }
 
+// DecodeRaw decodes a bunch of numbers `bsLines` which transferred from bar/space data, returns raw text.
+// It treads the Code49 as Mode-0, ignores other non-data characters.
+// If `skipChecksum` presents to true, Decode will ignore the last line of `bsLines`.
 func DecodeRaw(bsLines []string) string {
 	var (
 		chars     = []rune(charTable)
@@ -123,14 +127,22 @@ func DecodeRaw(bsLines []string) string {
 			asciiVal := slices.Index(c49Table7, chart)
 			intermediate = append(intermediate, rune(asciiVal))
 			stack.Reset()
-			continue
 		}
 		if v > len(hibcChars) {
 			stack.WriteRune(chars[v])
 			continue
 		}
+		if stack.Len() == 1 {
+			stack.WriteRune(chars[v])
+			continue
+		}
 		intermediate = append(intermediate, hibcChars[v])
 		stack.Reset()
+	}
+	if stack.Len() == 2 {
+		chart := stack.String()
+		asciiVal := slices.Index(c49Table7, chart)
+		intermediate = append(intermediate, rune(asciiVal))
 	}
 
 	return string(intermediate)
