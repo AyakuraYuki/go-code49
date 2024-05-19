@@ -12,7 +12,7 @@ func Decode(bsLines []string, skipChecksum bool) string {
 	var (
 		buffer strings.Builder
 		//index  int
-		chars = []rune(charMap)
+		chars = []rune(charTable)
 	)
 
 	// For each line expect last line, as ignoring checksum
@@ -28,8 +28,8 @@ func Decode(bsLines []string, skipChecksum bool) string {
 		// For each symbol
 		for col := 0; col < 4; col++ {
 			val := 0
-			parityMark := rowParity[row][col]
-			if parityMark == '0' || len(bsLines) == row+1 {
+			parity := rowParity[row][col]
+			if parity == 'E' || len(bsLines) == row+1 {
 				val = slices.Index(evenParityPatterns, payload[col<<3:(col+1)<<3])
 			} else {
 				val = slices.Index(oddParityPatterns, payload[col<<3:(col+1)<<3])
@@ -40,16 +40,15 @@ func Decode(bsLines []string, skipChecksum bool) string {
 
 			// Find and append buffer
 			suffix, prefix := chars[c1], chars[c2]
-			if slices.Contains(skipControlChars, prefix) {
-				if !slices.Contains(skipControlChars, suffix) {
-					buffer.WriteRune(suffix)
-				}
+			if slices.Contains(nonDataMethodChart, prefix) {
+				buffer.WriteRune(suffix)
 				continue
 			}
+
 			tableMark := string(prefix) + string(suffix)
 			asciiVal := slices.Index(c49Table7, tableMark)
 			if asciiVal == -1 {
-				if slices.Contains(controlChars, suffix) {
+				if slices.Contains(nonDataChart, suffix) {
 					buffer.WriteRune(prefix)
 				} else {
 					buffer.WriteString(string(suffix) + string(prefix))

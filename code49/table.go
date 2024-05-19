@@ -1,5 +1,7 @@
 package code49
 
+// Appendix F - Code 49 Encodation Patterns
+// even part
 var evenParityPatterns = []string{
 	"11521132", "25112131", "14212132", "25121221", "14221222", "12412132", "23321221",
 	"12421222", "21521221", "15112222", "15121312", "13312222", "24221311", "13321312",
@@ -346,6 +348,8 @@ var evenParityPatterns = []string{
 	"22312312", "11412313", "31412311", "15121132", "24221131", "13321132", "22421131",
 }
 
+// Appendix F - Code 49 Encodation Patterns
+// odd part
 var oddParityPatterns = []string{
 	"22121116", "42121114", "31221115", "51221113", "32112115", "52112113", "21212116",
 	"41212114", "61212112", "23121115", "43121113", "12221116", "32221114", "52221112",
@@ -692,36 +696,62 @@ var oddParityPatterns = []string{
 	"11321521", "12212521", "12221611", "11131162", "21122161", "21131251", "11113162",
 }
 
-// Indicates the parity to use for each word on each row
+// Table2: Row Parity Pattern for Code 49 Symbols
+// indicates the parity to use for each word on each row
+// 'O' for odd, 'E' for even
 var rowParity = []string{
-	"1001", // Line first
-	"0101", // Line second
-	"1100", // Line third
-	"0011", // Line fourth
-	"1010", // Line fifth
-	"0110", // Line sixth
-	"1111", // Line seventh
-	"0000", // Last Line (higher priority)
+	"OEEO", // Row 1
+	"EOEO", // Row 2
+	"OOEE", // Row 3
+	"EEOO", // Row 4
+	"OEOE", // Row 5
+	"EOOE", // Row 6
+	"OOOO", // Row 7
+	"EEEE", // Last Row (higher priority)
 }
 
+// Table5: Check Character Weighting Values
 // Weight used in checksum algorithm
 var (
+	// x, y, z in (row 0, col 0)
+	xWeight00, yWeight00, zWeight00 = 20, 16, 38
+
 	xWeights = []int{
-		1, 9, 31, 26, 2, 12, 17, 23, 37, 18, 22, 6, 27, 44, 15, 43,
-		39, 11, 13, 5, 41, 33, 36, 8, 4, 32, 3, 19, 40, 25, 29, 10,
+		// col: 1, 2, 3, 4
+		1, 9, 31, 26, // row 1
+		2, 12, 17, 23, // row 2
+		37, 18, 22, 6, // row 3
+		27, 44, 15, 43, // row 4
+		39, 11, 13, 5, // row 5
+		41, 33, 36, 8, // row 6
+		4, 32, 3, 19, // row 7
+		40, 25, 29, 10, // row 8
 	}
 	yWeights = []int{
-		9, 31, 26, 2, 12, 17, 23, 37, 18, 22, 6, 27, 44, 15, 43, 39,
-		11, 13, 5, 41, 33, 36, 8, 4, 32, 3, 19, 40, 25, 29, 10, 24,
+		// col: 1, 2, 3, 4
+		9, 31, 26, 2, // row 1
+		12, 17, 23, 37, // row 2
+		18, 22, 6, 27, // row 3
+		44, 15, 43, 39, // row 4
+		11, 13, 5, 41, // row 5
+		33, 36, 8, 4, // row 6
+		32, 3, 19, 40, // row 7
+		25, 29, 10, 24, // row 8
 	}
 	zWeights = []int{
-		31, 26, 2, 12, 17, 23, 37, 18, 22, 6, 27, 44, 15, 43, 39, 11,
-		13, 5, 41, 33, 36, 8, 4, 32, 3, 19, 40, 25, 29, 10, 24, 30,
+		// col: 1, 2, 3, 4
+		31, 26, 2, 12, // row 1
+		17, 23, 37, 18, // row 2
+		22, 6, 27, 44, // row 3
+		15, 43, 39, 11, // row 4
+		13, 5, 41, 33, // row 5
+		36, 8, 4, 32, // row 6
+		3, 19, 40, 25, // row 7
+		29, 10, 24, 30, // row 8
 	}
 )
 
 const (
-	charMap = `0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-. $/+%!&*~|\`
 	// pad is the value added to complete incomplete rows
 	pad = 48
 	// mode set to 0, we only support mode 0.
@@ -729,8 +759,16 @@ const (
 	mode = 0
 )
 
+const (
+	// Table6: Code 49 Code Character Set
+	charTable = `0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-. $/+%!&*~|\`
+
+	// Health Industry Bar Code (a.k.a. HIBC) Character Set
+	hibcCharTable = `0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-. $/+%`
+)
+
 var (
-	// controlChars declares the control characters
+	// nonDataChart declares six non-data characters
 	//
 	//	! - S1 (Shift 1)
 	//	& - S2 (Shift 2)
@@ -738,45 +776,48 @@ var (
 	//	~ - FNC 2 (Function 2)
 	//	| - FNC 3 (Function 3)
 	//	\ - NS (numeric shift)
-	controlChars = []rune{'!', '&', '*', '~', '|', '\\'}
+	nonDataChart = []rune{'!', '&', '*', '~', '|', '\\'}
 
-	skipControlChars = []rune{'*', '~', '|', '\\'}
+	nonDataMethodChart = []rune{'*', '~', '|', '\\'}
 )
 
-// ASCII Characters
+// Table7: Code 49 ASCII Chart
 var c49Table7 = []string{
-	"! ", // Null
-	"!A", // SOH
-	"!B", // STX
-	"!C", // ETX
-	"!D", // EOT
-	"!E", // ENQ
-	"!F", // ACK
-	"!G", // BEL
-	"!H", // BS
-	"!I", // HT
-	"!J", // LF
-	"!K", // VT
-	"!L", // FF
-	"!M", // CR
-	"!N", // SO
-	"!O", // SI
-	"!P", // DLE
-	"!Q", // DC1
-	"!R", // DC2
-	"!S", // DC3
-	"!T", // DC4
-	"!U", // NAK
-	"!V", // SYN
-	"!W", // ETB
-	"!X", // CAN
-	"!Y", // EM
-	"!Z", // SUB
-	"!1", // ESC
-	"!2", // FS
-	"!3", // GS
-	"!4", // RS
-	"!5", // US
+	// column 1
+	"! ", // <NUL>
+	"!A", // <SOH>
+	"!B", // <STX>
+	"!C", // <ETX>
+	"!D", // <EOT>
+	"!E", // <ENQ>
+	"!F", // <ACK>
+	"!G", // <BEL>
+	"!H", // <BS>
+	"!I", // <HT>
+	"!J", // <LF>
+	"!K", // <VT>
+	"!L", // <FF>
+	"!M", // <CR>
+	"!N", // <SO>
+	"!O", // <SI>
+	"!P", // <DLE>
+	"!Q", // <DC1>
+	"!R", // <DC2>
+	"!S", // <DC3>
+	"!T", // <DC4>
+	"!U", // <NAK>
+	"!V", // <SYN>
+	"!W", // <ETB>
+	"!X", // <CAN>
+	"!Y", // <EM>
+	"!Z", // <SUB>
+	"!1", // <ESC>
+	"!2", // <FS>
+	"!3", // <GS>
+	"!4", // <RS>
+	"!5", // <US>
+
+	// column 2
 	" ",  // Space
 	"!6", // !
 	"!7", // "
@@ -809,6 +850,8 @@ var c49Table7 = []string{
 	"&3", // =
 	"&4", // >
 	"&5", // ?
+
+	// column 3
 	"&6", // @
 	"A",  // A
 	"B",  // B
@@ -841,6 +884,8 @@ var c49Table7 = []string{
 	"&9", // ]
 	"&0", // ^
 	"&-", // _
+
+	// column 4
 	"&.", // `
 	"&A", // a
 	"&B", // b
@@ -871,6 +916,6 @@ var c49Table7 = []string{
 	"&$", // {
 	"&/", // |
 	"&+", // }
-	"&%", // ~
-	"& ", // DEL
+	"&%", // ~ (tilde)
+	"& ", // <DEL>
 }

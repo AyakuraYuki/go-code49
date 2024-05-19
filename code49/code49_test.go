@@ -13,6 +13,6 @@ func TestDecode(t *testing.T) {
 		"11123121511212521211113243422213114",
 		"11224211311211313421211153141112154",
 	}
-	text := Decode(codes, true)
-	t.Log(text)
+	t.Log(Decode(codes, true))
+	t.Log(Decode(codes, false))
 }
