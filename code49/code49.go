@@ -7,6 +7,12 @@ import (
 	"strings"
 )
 
+// SetMode set data type in mode ECI, GS1 or HIBC.
+// The default mode is ECI.
+func SetMode(m DataType) {
+	mode = m
+}
+
 // Encode encodes a given text into patterns in Code49
 func Encode(text string) (patterns []string, encodationPatterns [][]int, err error) {
 	var (
@@ -30,12 +36,18 @@ func Encode(text string) (patterns []string, encodationPatterns [][]int, err err
 		return nil, nil, errors.New("invalid characters in input")
 	}
 
-	// currently ignoring FNC chart, implement in future update
-	inputBS := []byte(text)
+	inputData := toBytes(text)
 	intermediateBuilder := strings.Builder{}
-	for i := 0; i < len(inputBS); i++ {
-		asciiVal := inputBS[i]
-		intermediateBuilder.WriteString(c49Table7[asciiVal])
+	if mode == GS1 {
+		intermediateBuilder.WriteRune('*') // FNC1
+	}
+	for i := 0; i < len(inputData); i++ {
+		c := inputData[i]
+		if c == FNC1 {
+			intermediateBuilder.WriteRune('*') // FNC1
+		} else {
+			intermediateBuilder.WriteString(c49Table7[c])
+		}
 	}
 
 	// ------ analyse code words ------

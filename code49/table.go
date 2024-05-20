@@ -1,5 +1,20 @@
 package code49
 
+// pad is the value added to complete incomplete rows
+const pad = 48
+
+// mode set to 0, we only support mode 0.
+// Other modes are used for more efficient numeric encoding, shift values.
+var mode = ECI
+
+type DataType int
+
+const (
+	ECI  DataType = 0 // Extended Channel Interpretations (default)
+	GS1  DataType = 1 // GS1 Application Identifier and data pairs in "[AI]DATA" format
+	HIBC DataType = 2 // Health Industry Bar Code number (without check digit)
+)
+
 // Table7: Code 49 ASCII Chart
 var c49Table7 = []string{
 	// column 1
@@ -913,17 +928,3 @@ var oddEncodationPatterns = []string{
 	"11312251", "11321341", "12212341", "12221431", "13112431", "13121521", "11312431",
 	"11321521", "12212521", "12221611", "11131162", "21122161", "21131251", "11113162",
 }
-
-const (
-	// pad is the value added to complete incomplete rows
-	pad = 48
-	// mode set to 0, we only support mode 0.
-	// Other modes are used for more efficient numeric encoding, shift values.
-	mode = 0
-)
-
-const (
-	ECI  = iota // Extended Channel Interpretations (default)
-	GS1         // GS1 Application Identifier and data pairs in "[AI]DATA" format
-	HIBC        // Health Industry Bar Code number (without check digit)
-)
