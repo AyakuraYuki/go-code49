@@ -921,3 +921,9 @@ const (
 	// Other modes are used for more efficient numeric encoding, shift values.
 	mode = 0
 )
+
+const (
+	ECI  = iota // Extended Channel Interpretations (default)
+	GS1         // GS1 Application Identifier and data pairs in "[AI]DATA" format
+	HIBC        // Health Industry Bar Code number (without check digit)
+)
